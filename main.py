@@ -1,9 +1,43 @@
 import sys
+from tkinter.tix import Tree
 from PyQt5.QtWidgets import *
 from PyQt5 import QtWidgets
 from PyQt5 import uic
 from bs4 import BeautifulSoup
+import pyperclip
 import requests
+import pyautogui
+import time
+
+def my_write(text):
+    pyperclip.copy(text)
+    pyautogui.hotkey("ctrl", "v")
+
+def copy():
+    w = pyautogui.getWindowsWithTitle("YouTube - Chrome")[0]
+    if w.isActive == False:
+        w.activate()
+    if w.isMaximized == False:
+        w.maximize()
+    f = open("channel_list.txt", 'r', encoding='UTF8')
+    lines = f.readlines()
+    for line in lines:
+        QApplication.processEvents()
+        pyautogui.press("f6")
+        my_write(line)
+        pyautogui.press("enter")
+        time.sleep(3)
+        btn = pyautogui.locateOnScreen("subscribe_btn.png", grayscale=True, confidence=0.9)
+        title = w.title
+        title = title.replace("YouTube - Chrome", "")
+        if btn is not None:
+            pyautogui.click(btn)
+            myWindow.show_execution(title+"ok")
+        else:
+            myWindow.show_execution(title+"pass")
+            continue
+    myWindow.show_execution("complete!")
+    f.close
 
 def get_channels(file):
     f = open(file, 'r', encoding='UTF8')
@@ -15,6 +49,7 @@ def get_channels(file):
     for i,channel in enumerate(channels):
         if i%2 == 0:
             ch_list.append(str(channel["href"]))
+    f.close
     return ch_list
 
 
@@ -30,14 +65,25 @@ class WindowClass(QMainWindow, form_class) :
         self.initUI()
 
     def initUI(self):
-        self.Button1.clicked.connect(self.file_open)
+        self.open_btn.clicked.connect(self.file_open)
+        self.copy_Button.clicked.connect(copy)
 
     def file_open(self):
-        filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Open File')
-        self.file_path.setText(filename[0])	
-        ch_list = get_channels(filename[0])
-        for i in range(len(ch_list)):
-            self.channel_list.append("youtube.com"+ch_list[i])	
+        try:
+            filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Open File')
+            self.file_path.setText(filename[0])	
+            ch_list = get_channels(filename[0])
+            f = open("channel_list.txt", 'w', encoding='UTF8')
+            for i in range(len(ch_list)):
+                self.channel_list.append("youtube.com"+ch_list[i])	
+                f.write("youtube.com"+ch_list[i]+"\n")
+            f.close
+        except:
+            return 0
+
+    def show_execution(self, text):
+        self.execution_textBrowser.append(text)
+        self.execution_textBrowser.repaint()
     
 
 
